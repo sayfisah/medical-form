@@ -76,34 +76,81 @@
 
     {{-- File --}}
 
-   @elseif ($type === 'file')
-    <div x-data class="space-y-2">
-{{-- Hidden File Input --}}
-<input
-    id="{{ $inputId }}"
-    type="file"
-    style="display: none"
-    {{ $multiple ? 'multiple' : '' }}
-    {{ $accept ? "accept=$accept" : '' }}
-    @change="handleFileChange($event, '{{ $model }}')"
-/>
+@elseif ($type === 'file')
+<div
+    x-data="{
+        files: [],
+        openFileDialog() {
+            $refs.fileInput.click();
+        },
+        handleUpload(event) {
+            const selectedFiles = Array.from(event.target.files);
+            @if ($multiple)
+                this.files.push(...selectedFiles);
+            @else
+                this.files = selectedFiles;
+            @endif
 
+            // Optional: push to global Alpine store or Livewire handler
+            handleFileChange(event, '{{ $model }}');
+        },
+        removeFile(index) {
+            this.files.splice(index, 1);
+        }
+    }"
+    class="space-y-2"
+>
+    {{-- Hidden File Input --}}
+    <input
+        x-ref="fileInput"
+        id="{{ $inputId }}"
+        type="file"
+        class="hidden"
+        {{ $multiple ? 'multiple' : '' }}
+        @if ($accept) accept="{{ $accept }}" @endif
+        @change="handleUpload"
+    />
 
-        {{-- File Preview --}}
-        <div class="space-y-1">
-            <template x-for="(file, index) in files['{{ $model }}']" :key="index">
-                <div class="flex items-center justify-between bg-gray-100 px-3 py-1 rounded">
-                    <span x-text="file.name" class="text-sm text-gray-800 truncate"></span>
-                    <button type="button" class="text-red-500 text-sm" @click="removeFile('{{ $model }}', index)">×</button>
-                </div>
+    {{-- Styled Upload Button --}}
+    <button
+        type="button"
+        @click="openFileDialog"
+        class="relative flex w-full overflow-hidden rounded-lg border border-gray-300 text-sm focus:z-10 focus:ring-1 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+    >
+        <span class="h-full whitespace-nowrap bg-indigo-600 text-white rounded-s-lg px-4 py-3">
+            Choose File
+        </span>
+        <span class="group flex h-full grow overflow-hidden px-4 py-3 text-gray-700">
+            <template x-if="files.length">
+                <span class="truncate" x-text="files.length + ' file(s) selected'"></span>
             </template>
-        </div>
+            <template x-if="!files.length">
+                <span>No File Chosen</span>
+            </template>
+        </span>
+        <span class="absolute left-0 top-0 h-full w-full cursor-pointer"></span>
+    </button>
 
-        {{-- Validation Message --}}
-        @error($model)
-            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-        @enderror
+    {{-- File Preview List --}}
+    <div class="space-y-1" x-show="files.length > 0">
+        <template x-for="(file, index) in files" :key="index">
+            <div class="flex items-center justify-between bg-gray-100 px-3 py-1 rounded">
+                <span x-text="file.name" class="text-sm text-gray-800 truncate w-full"></span>
+                <button
+                    type="button"
+                    class="text-red-500 text-sm ml-2"
+                    @click="removeFile(index)"
+                >×</button>
+            </div>
+        </template>
     </div>
+
+    {{-- Validation --}}
+    @error($model)
+        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+    @enderror
+</div>
+
 
 
 
