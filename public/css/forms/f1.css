@@ -1,0 +1,18 @@
+/* body {
+    background-color: red !important;
+} */
+
+
+@media print {
+    .print-hide {
+        display: none !important;
+    }
+    .print-show {
+        display: inline !important;
+    }
+            .no-print {
+            display: none !important;
+        }
+}
+
+
